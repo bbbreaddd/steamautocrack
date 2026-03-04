@@ -569,11 +569,10 @@ internal abstract class Generator
                 var statData = GameSchema!.RootElement.GetProperty("game")
                     .GetProperty("availableGameStats")
                     .GetProperty("stats");
-                var Count = 0;
 
                 _log.Debug("Saving stats...");
-                var sw = new StreamWriter(Path.Combine(ConfigPath, "stats.txt"));
-                var newline = "";
+                var statsList = new List<JsonObject>();
+                
                 foreach (var stat in statData.EnumerateArray())
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -581,23 +580,37 @@ internal abstract class Generator
                     var name = "";
                     var defaultValue = "";
 
-                    if (stat.TryGetProperty("name", out var _name)) name = _name.GetString();
+                    if (stat.TryGetProperty("name", out var _name)) name = _name.GetString() ?? "";
                     if (stat.TryGetProperty("defaultvalue", out var _defaultvalue))
                         defaultValue = _defaultvalue.ToString();
-                    sw.Write(newline + name + "=int=" + defaultValue);
-                    newline = Environment.NewLine;
-                    Count++;
+
+                    var statObject = new JsonObject
+                    {
+                        ["name"] = name,
+                        ["type"] = "int",
+                        ["default"] = defaultValue,
+                        ["global"] = "0"
+                    };
+                    
+                    statsList.Add(statObject);
                 }
 
-                sw.Close();
-                if (Count > 0)
+                if (statsList.Count > 0)
                 {
-                    var empty = Count == 1 ? "" : "s";
-                    _log.Debug($"Successfully got {Count} stat{empty}.");
+                    var statsJson = JsonSerializer.Serialize(
+                        statsList,
+                        new JsonSerializerOptions
+                        {
+                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                            WriteIndented = true
+                        });
+                    File.WriteAllText(Path.Combine(ConfigPath, "stats.json"), statsJson);
+                    
+                    var empty = statsList.Count == 1 ? "" : "s";
+                    _log.Debug($"Successfully got {statsList.Count} stat{empty}.");
                 }
                 else
                 {
-                    File.Delete(Path.Combine(ConfigPath, "stats.txt"));
                     _log.Debug("No stat found.");
                     return;
                 }
