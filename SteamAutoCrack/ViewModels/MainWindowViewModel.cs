@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -253,9 +253,15 @@ internal class MainWindowViewModel : INotifyPropertyChanged
             {
                 Config.EMUGameInfoConfigs.GameInfoAPI = value;
                 NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(IsSteamWebAPIKeyVisible));
             }
         }
     }
+
+    public System.Windows.Visibility IsSteamWebAPIKeyVisible => 
+        GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper 
+            ? System.Windows.Visibility.Hidden 
+            : System.Windows.Visibility.Visible;
 
     public List<EMUGameInfoConfig.GeneratorGameInfoAPI> GameInfoAPIs { get; set; }
 

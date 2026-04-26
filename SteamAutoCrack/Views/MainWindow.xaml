@@ -1,4 +1,4 @@
-﻿<Window x:Class="SteamAutoCrack.MainWindow"
+<Window x:Class="SteamAutoCrack.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -81,10 +81,10 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <TextBlock HorizontalAlignment="Left" Margin="10,82,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.SteamWebAPIKey}}" VerticalAlignment="Top"/>
+                    <TextBlock Visibility="{Binding IsSteamWebAPIKeyVisible}" HorizontalAlignment="Left" Margin="10,82,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.SteamWebAPIKey}}" VerticalAlignment="Top"/>
                     <CheckBox x:Name="UseSteamWebAppList" Content="{I18N {x:Static steamAutoCrack:LangKeys.UseSteamWebAppList}}" HorizontalAlignment="Left" Margin="10,105,0,0" VerticalAlignment="Top" IsChecked="{Binding UseSteamWebAppList}"/>
                     <CheckBox x:Name="GenerateImages" Content="{I18N {x:Static steamAutoCrack:LangKeys.GenerateAchievementImages}}" HorizontalAlignment="Left" Margin="215,105,0,0" VerticalAlignment="Top" IsChecked="{Binding GenerateImages}"/>
-                    <TextBox x:Name="SteamWebAPIKey" HorizontalAlignment="Left" Margin="140,75,0,0" TextWrapping="NoWrap" Text="{Binding SteamWebAPIKey}" VerticalAlignment="Top" Width="312" MaxLines="1"/>
+                    <TextBox Visibility="{Binding IsSteamWebAPIKeyVisible}" x:Name="SteamWebAPIKey" HorizontalAlignment="Left" Margin="140,75,0,0" TextWrapping="NoWrap" Text="{Binding SteamWebAPIKey}" VerticalAlignment="Top" Width="312" MaxLines="1"/>
                 </Grid>
 
                 <CheckBox x:Name="GenerateEMUConfig" Content="{I18N {x:Static steamAutoCrack:LangKeys._2GenerateGoldbergSteamEmulatorConfiguration}}" Margin="5,0,0,0" IsChecked="{Binding GenerateEMUConfig}"/>

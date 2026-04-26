@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using FuzzySharp;
 using FuzzySharp.SimilarityRatio;
@@ -96,7 +96,14 @@ public class SteamAppList
                     _log.Information("Updating Steam App list...");
                     if (Config.Config.EMUGameInfoConfigs.SteamWebAPIKey == String.Empty)
                     {
-                        _log.Warning("Steam Web API Key not set. Please set it to update Steam App List.");
+                        if (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper)
+                        {
+                            _log.Debug("Steam Web API Key not set. Skipping Steam App List update (expected for Community Scraper).");
+                        }
+                        else
+                        {
+                            _log.Warning("Steam Web API Key not set. Please set it to update Steam App List.");
+                        }
                         if (!dbExistsWithData) bDisposed = true;
                         return;
                     }
@@ -198,8 +205,15 @@ public class SteamAppList
     {
         if (bDisposed == true)
         {
-            _log.Error("Not initialized Steam App list.");
-            throw new Exception("Not initialized Steam App list.");
+            if (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper)
+            {
+                _log.Debug("Steam App list is not initialized. Proceeding without app names (expected for Community Scraper).");
+            }
+            else
+            {
+                _log.Error("Steam App list is not initialized (likely due to missing API key). Proceeding without app names.");
+            }
+            return;
         }
 
         _log.Debug("Waiting for Steam App list initialized...");
@@ -223,9 +237,51 @@ public class SteamAppList
         }
     }
 
+    private static async Task<IEnumerable<SteamApp>> SearchSteamStoreAPI(string name)
+    {
+        var apps = new List<SteamApp>();
+        try
+        {
+            if (string.IsNullOrWhiteSpace(name)) return apps;
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(15);
+            var url = $"https://store.steampowered.com/api/storesearch/?term={Uri.EscapeDataString(name)}&l=english&cc=US";
+            var response = await client.GetAsync(url).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using var json = JsonDocument.Parse(content);
+                if (json.RootElement.TryGetProperty("items", out var items))
+                {
+                    foreach (var item in items.EnumerateArray())
+                    {
+                        if (item.TryGetProperty("id", out var idProp) && item.TryGetProperty("name", out var nameProp))
+                        {
+                            apps.Add(new SteamApp
+                            {
+                                AppId = idProp.GetUInt32(),
+                                Name = nameProp.GetString()
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to search Steam Store API fallback.");
+        }
+        return apps;
+    }
+
     public static async Task<IEnumerable<SteamApp>> GetListOfAppsByName(string name)
     {
-        var query = await db!.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
+        if (db == null || await db.Table<SteamApp>().CountAsync().ConfigureAwait(false) == 0)
+        {
+            return await SearchSteamStoreAPI(name).ConfigureAwait(false);
+        }
+
+        var query = await db.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
         var SearchOfAppsByName = query.Search(x => x.Name)
             .SetCulture(StringComparison.OrdinalIgnoreCase)
             .ContainingAll(name.Split(' '));
@@ -243,7 +299,12 @@ public class SteamAppList
 
     public static async Task<IEnumerable<SteamApp>> GetListOfAppsByNameFuzzy(string name)
     {
-        var query = await db!.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
+        if (db == null || await db.Table<SteamApp>().CountAsync().ConfigureAwait(false) == 0)
+        {
+            return await SearchSteamStoreAPI(name).ConfigureAwait(false);
+        }
+
+        var query = await db.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
         var listOfAppsByName = new List<SteamApp>();
         var results = Process.ExtractTop(new SteamApp { Name = name }, query, x => x.Name?.ToLower(),
             ScorerCache.Get<WeightedRatioScorer>(), FuzzySearchScore);
@@ -273,7 +334,11 @@ public class SteamAppList
     public static async Task<SteamApp> GetAppById(uint appid)
     {
         _log?.Debug($"Trying to get app with ID {appid}");
-        var app = await db!.Table<SteamApp>().FirstOrDefaultAsync(x => x.AppId.Equals(appid)).ConfigureAwait(false);
+        SteamApp? app = null;
+        if (db != null)
+        {
+            app = await db.Table<SteamApp>().FirstOrDefaultAsync(x => x.AppId.Equals(appid)).ConfigureAwait(false);
+        }
         if (app != null) _log?.Debug($"Successfully got app {app}");
         else
         {
