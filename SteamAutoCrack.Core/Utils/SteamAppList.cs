@@ -45,8 +45,8 @@ public class SteamAppList
     private const int FuzzySearchScore = 80;
 
     private static string steamapplisturl => 
-        (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer && !string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint))
-            ? $"{Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint.TrimEnd('/')}/IStoreService/GetAppList/v1/" 
+        (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer)
+            ? $"{(string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint) ? EMUGameInfoConfig.DefaultProxyURL : Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint).TrimEnd('/')}/IStoreService/GetAppList/v1/" 
             : "https://api.steampowered.com/IStoreService/GetAppList/v1/";
 
     private static readonly ILogger _log = Log.ForContext<SteamAppList>();
@@ -135,11 +135,6 @@ public class SteamAppList
                         string url;
                         if (useProxy)
                         {
-                            if (!hasProxyUrl)
-                            {
-                                _log.Error("Proxy Server mode selected but no Proxy URL is set in Settings.");
-                                return;
-                            }
                             url = $"{steamapplisturl}?max_results=50000&last_appid={lastAppId}";
                         }
                         else

@@ -19,6 +19,8 @@ namespace SteamAutoCrack.Core.Utils;
 
 public class EMUGameInfoConfig
 {
+    public const string DefaultProxyURL = "https://api.breadcloud.net/";
+
     public enum GeneratorGameInfoAPI
     {
         [Description("Community Scraper")] GeneratorCommunityScraper,
@@ -185,15 +187,11 @@ internal abstract class Generator
 
         if (useProxy)
         {
-            if (string.IsNullOrWhiteSpace(CustomAPIEndpoint))
-            {
-                _log.Error("Proxy Server mode selected but no Proxy URL is set in Settings.");
-                throw new Exception("Proxy Server mode selected but no Proxy URL is set in Settings.");
-            }
-
+            var endpoint = string.IsNullOrWhiteSpace(CustomAPIEndpoint) ? DefaultProxyURL : CustomAPIEndpoint;
+            
             // Use custom endpoint as proxy
             var officialUri = new Uri(officialUrl);
-            var customBase = CustomAPIEndpoint.TrimEnd('/');
+            var customBase = endpoint.TrimEnd('/');
             var separatorProxy = string.IsNullOrEmpty(queryParams) ? "" : "?";
             return $"{customBase}{officialUri.AbsolutePath}{separatorProxy}{queryParams}";
         }

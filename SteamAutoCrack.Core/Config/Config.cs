@@ -123,7 +123,7 @@ public class Config
     public static GenCrackOnlyConfigs GenCrackOnlyConfigs { get; set; } = new();
     public static ProcessConfigs ProcessConfigs { get; set; } = new();
 
-    private static bool _SaveCrackConfig = CheckConfigFile();
+    private static bool _SaveCrackConfig = true;
     private static bool _EnableDebugLog;
     public static LoggingLevelSwitch loggingLevelSwitch = new();
 
