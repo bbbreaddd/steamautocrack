@@ -44,7 +44,10 @@ public class SteamAppList
 {
     private const int FuzzySearchScore = 80;
 
-    private static readonly string steamapplisturl = "https://api.steampowered.com/IStoreService/GetAppList/v1/";
+    private static string steamapplisturl => 
+        (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer && !string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint))
+            ? $"{Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint.TrimEnd('/')}/IStoreService/GetAppList/v1/" 
+            : "https://api.steampowered.com/IStoreService/GetAppList/v1/";
 
     private static readonly ILogger _log = Log.ForContext<SteamAppList>();
 
@@ -94,18 +97,27 @@ public class SteamAppList
                 try
                 {
                     _log.Information("Updating Steam App list...");
-                    if (Config.Config.EMUGameInfoConfigs.SteamWebAPIKey == String.Empty)
+                    if (string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.SteamWebAPIKey))
                     {
-                        if (Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper)
+                        var currentApi = Config.Config.EMUGameInfoConfigs.GameInfoAPI;
+                        _log.Debug("Steam Web API Key is empty. Current API Mode: {mode}", currentApi);
+
+                        if (currentApi == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer)
                         {
-                            _log.Debug("Steam Web API Key not set. Skipping Steam App List update (expected for Community Scraper).");
+                            _log.Debug("Using Proxy Server mode, proceeding without local API key.");
+                        }
+                        else if (currentApi == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper)
+                        {
+                            _log.Debug("Using Community Scraper mode, skipping app list update.");
+                            if (!dbExistsWithData) bDisposed = true;
+                            return;
                         }
                         else
                         {
                             _log.Warning("Steam Web API Key not set. Please set it to update Steam App List.");
+                            if (!dbExistsWithData) bDisposed = true;
+                            return;
                         }
-                        if (!dbExistsWithData) bDisposed = true;
-                        return;
                     }
 
                     using var client = new HttpClient();
@@ -113,12 +125,27 @@ public class SteamAppList
                     bool haveMore = false;
                     var allApps = new List<SteamApp>();
                     var requestKey = Config.Config.EMUGameInfoConfigs.SteamWebAPIKey;
+                    var useProxy = Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer;
+                    var hasProxyUrl = !string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint);
 
                     var maxRetries = 3;
 
                     do
                     {
-                        var url = $"{steamapplisturl}?key={requestKey}&max_results=50000&last_appid={lastAppId}";
+                        string url;
+                        if (useProxy)
+                        {
+                            if (!hasProxyUrl)
+                            {
+                                _log.Error("Proxy Server mode selected but no Proxy URL is set in Settings.");
+                                return;
+                            }
+                            url = $"{steamapplisturl}?max_results=50000&last_appid={lastAppId}";
+                        }
+                        else
+                        {
+                            url = $"{steamapplisturl}?key={requestKey}&max_results=50000&last_appid={lastAppId}";
+                        }
                         _log.Debug("Requesting Steam App list batch with last_appid={lastAppId}", lastAppId);
 
                         var attempt = 0;

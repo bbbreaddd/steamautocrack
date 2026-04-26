@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -499,22 +499,22 @@ public class EMUGameInfoConfigs
     [JsonIgnore] public string AppID { get; set; } = string.Empty;
 
     /// <summary>
-    ///     Use Xan105 API for generating game schema.
-    /// </summary>
-    public bool UseXan105API { get; set; } = EMUGameInfoConfig.DefaultConfig.UseXan105API;
-
-    /// <summary>
     ///     Use Steam Web App List when generating DLCs.
     /// </summary>
     public bool UseSteamWebAppList { get; set; } = EMUGameInfoConfig.DefaultConfig.UseSteamWebAppList;
+
+    /// <summary>
+    ///     Custom Steam Web API endpoint URL.
+    /// </summary>
+    public string CustomAPIEndpoint { get; set; } = EMUGameInfoConfig.DefaultConfig.CustomAPIEndpoint;
 
     public void ResettoDefault()
     {
         SteamWebAPIKey = EMUGameInfoConfig.DefaultConfig.SteamWebAPIKey;
         GameInfoAPI = EMUGameInfoConfig.DefaultConfig.GameInfoAPI;
         GenerateImages = EMUGameInfoConfig.DefaultConfig.GenerateImages;
-        UseXan105API = EMUGameInfoConfig.DefaultConfig.UseXan105API;
         UseSteamWebAppList = EMUGameInfoConfig.DefaultConfig.UseSteamWebAppList;
+        CustomAPIEndpoint = EMUGameInfoConfig.DefaultConfig.CustomAPIEndpoint;
     }
 
     public EMUGameInfoConfig GetEMUGameInfoConfig()
@@ -524,8 +524,8 @@ public class EMUGameInfoConfigs
             GameInfoAPI = GameInfoAPI,
             SteamWebAPIKey = SteamWebAPIKey,
             GenerateImages = GenerateImages,
-            UseXan105API = UseXan105API,
             UseSteamWebAppList = UseSteamWebAppList,
+            CustomAPIEndpoint = CustomAPIEndpoint,
             ConfigPath = Config.EMUConfigPath
         };
         emuGameInfoConfig.SetAppIDFromString(AppID);

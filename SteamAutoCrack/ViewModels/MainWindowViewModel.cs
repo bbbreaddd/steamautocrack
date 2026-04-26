@@ -201,19 +201,7 @@ internal class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool UseXan105API
-    {
-        get => Config.EMUGameInfoConfigs.UseXan105API;
 
-        set
-        {
-            if (value != Config.EMUGameInfoConfigs.UseXan105API)
-            {
-                Config.EMUGameInfoConfigs.UseXan105API = value;
-                NotifyPropertyChanged();
-            }
-        }
-    }
 
     public bool UseSteamWebAppList
     {
@@ -225,6 +213,21 @@ internal class MainWindowViewModel : INotifyPropertyChanged
             {
                 Config.EMUGameInfoConfigs.UseSteamWebAppList = value;
                 NotifyPropertyChanged();
+            }
+        }
+    }
+
+    public string CustomAPIEndpoint
+    {
+        get => Config.EMUGameInfoConfigs.CustomAPIEndpoint;
+
+        set
+        {
+            if (value != Config.EMUGameInfoConfigs.CustomAPIEndpoint)
+            {
+                Config.EMUGameInfoConfigs.CustomAPIEndpoint = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(IsSteamWebAPIKeyVisible));
             }
         }
     }
@@ -258,9 +261,10 @@ internal class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public System.Windows.Visibility IsSteamWebAPIKeyVisible => 
-        GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper 
-            ? System.Windows.Visibility.Hidden 
+    public System.Windows.Visibility IsSteamWebAPIKeyVisible =>
+        (GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorCommunityScraper ||
+         GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer)
+            ? System.Windows.Visibility.Hidden
             : System.Windows.Visibility.Visible;
 
     public List<EMUGameInfoConfig.GeneratorGameInfoAPI> GameInfoAPIs { get; set; }

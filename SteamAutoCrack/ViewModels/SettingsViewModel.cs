@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -102,6 +102,22 @@ internal class SettingsViewModel : INotifyPropertyChanged
             }
         }
     }
+
+    public string CustomAPIEndpoint
+    {
+        get => Config.EMUGameInfoConfigs.CustomAPIEndpoint;
+
+        set
+        {
+            if (value != Config.EMUGameInfoConfigs.CustomAPIEndpoint)
+            {
+                Config.EMUGameInfoConfigs.CustomAPIEndpoint = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+
+
 
     public List<Config.Languages> Languages { get; set; }
 
