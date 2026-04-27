@@ -1,1 +1,1 @@
-dotnet publish SteamAutoCrack\SteamAutoCrack.csproj -c Release -r win-x86 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish SteamAutoCrack\SteamAutoCrack.csproj -c Release -r win-x86 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
