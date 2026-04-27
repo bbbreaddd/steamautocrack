@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <!-- 
+      NU1701: Package compatibility (old .NET Framework packages)
+      NU1510: Microsoft.CSharp pruning warning (redundant in modern .NET)
+      NU1903: Vulnerability in transitive dependency (Cryptography.Xml from Windows.Compatibility)
+      NETSDK1206: SQLite RID usage warning (specific to .NET 8/10)
+    -->
+    <NoWarn>$(NoWarn);NU1701;NU1510;NU1903;NETSDK1206</NoWarn>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+</Project>

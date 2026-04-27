@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
@@ -42,7 +42,7 @@ public class EnumDescriptionConverter : IValueConverter
 
             return enumObj.ToString();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return string.Empty;
         }

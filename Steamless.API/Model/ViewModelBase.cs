@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Steamless - Copyright (c) 2015 - 2024 atom0s [atom0s@live.com]
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
@@ -39,10 +39,6 @@ namespace Steamless.API.Model
             this.Events = new EventHandlerList();
         }
 
-        /// <summary>
-        /// Internal static design mode flag.
-        /// </summary>
-        private static bool? m_IsInDesignMode;
 
         /// <summary>
         /// Gets if this ViewModelBase is in design mode.

@@ -77,7 +77,7 @@ internal class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public string Ver => "SteamAutoCrack " + Assembly.GetExecutingAssembly().GetName().Version;
+    public string Ver => "SteamAutoCrack " + (Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "");
 
     private string _StartBtnString = Resources.Start;
 

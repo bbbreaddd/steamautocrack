@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Reflection;
 using Serilog;
 using Serilog.Core;
@@ -56,7 +56,8 @@ internal class Program
         crackCommand.SetAction(async (parseResult) =>
         {
             if (parseResult.GetValue(DebugOption)) SetDebugLogLevel(levelSwitch);
-            await Process(parseResult.GetValue(pathArgument), parseResult.GetValue(ConfigOption), parseResult.GetValue(AppIDOption));
+            await Process(parseResult.GetValue(pathArgument)!, parseResult.GetValue(ConfigOption)!, parseResult.GetValue(AppIDOption)!);
+
         });
 
         #endregion
@@ -150,8 +151,9 @@ internal class Program
 
         #region rootcommand
 
-        var rootCommand = new RootCommand("SteamAutoCrack " + Assembly.GetExecutingAssembly().GetName().Version +
+        var rootCommand = new RootCommand("SteamAutoCrack " + (Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "") +
                                           " - Steam Game Automatic Cracker")
+
         {
             crackCommand,
             updateapplistCommand,
@@ -166,7 +168,8 @@ internal class Program
         return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static async Task Process(string InputPath, FileInfo ConfigPath, string AppID)
+    private static async Task Process(string InputPath, FileInfo? ConfigPath, string? AppID)
+
     {
         try
         {
@@ -174,7 +177,7 @@ internal class Program
             Config.ConfigPath = ConfigPath != null && ConfigPath.Exists ? ConfigPath.FullName : Config.ConfigPath;
             if (!Config.LoadConfig()) _log.Warning("Cannot load config. Using Default Config.");
             Config.InputPath = InputPath;
-            Config.EMUGameInfoConfigs.AppID = AppID;
+            Config.EMUGameInfoConfigs.AppID = AppID ?? string.Empty;
             await new Processor().ProcessFileCLI();
         }
         catch (Exception ex)

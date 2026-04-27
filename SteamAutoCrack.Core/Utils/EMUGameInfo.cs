@@ -388,7 +388,8 @@ internal abstract class Generator
                 var achievementsNode = xmlDoc.SelectSingleNode("//achievements");
                 if (achievementsNode != null)
                 {
-                    foreach (System.Xml.XmlNode ach in achievementsNode.SelectNodes("achievement"))
+                    foreach (System.Xml.XmlNode ach in achievementsNode.SelectNodes("achievement")!)
+
                     {
                         var a = new Achievement
                         {
@@ -407,7 +408,8 @@ internal abstract class Generator
                 var statsNode = xmlDoc.SelectSingleNode("//stats");
                 if (statsNode != null)
                 {
-                    foreach (System.Xml.XmlNode stat in statsNode.SelectNodes("stat"))
+                    foreach (System.Xml.XmlNode stat in statsNode.SelectNodes("stat")!)
+
                     {
                         var s = new
                         {

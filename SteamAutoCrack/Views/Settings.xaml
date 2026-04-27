@@ -43,7 +43,8 @@
         <Grid Margin="0,205,0,0" Height="85" Width="480" VerticalAlignment="Top">
             <Border BorderBrush="Black" BorderThickness="1"/>
             <TextBlock HorizontalAlignment="Left" Margin="10,17,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.Language}}" VerticalAlignment="Top"/>
-            <ComboBox x:Name="Language" HorizontalAlignment="Left" Margin="80,8,0,0" VerticalAlignment="Top" Width="130" ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}">
+            <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Left" Margin="80,8,0,0" VerticalAlignment="Top" Width="130" ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}">
+
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Converter={StaticResource enumConverter}}"/>
@@ -54,7 +55,8 @@
             <TextBlock HorizontalAlignment="Left" Margin="10,48,0,0" TextWrapping="Wrap" Text="Proxy URL" VerticalAlignment="Top"/>
             <TextBox x:Name="CustomAPIEndpoint" HorizontalAlignment="Left" Margin="80,42,0,0" TextWrapping="NoWrap" Text="{Binding CustomAPIEndpoint}" VerticalAlignment="Top" Width="385" MaxLines="1"/>
         </Grid>
-        <Button x:Name="Close" Content="{I18N {x:Static steamAutoCrack:LangKeys.Close}}" HorizontalAlignment="Center" Margin="0,0,0,10" VerticalAlignment="Bottom" Width="77" Click="Close_Click" IsDefault="True"/>
+        <Button x:Name="CloseButton" Content="{I18N {x:Static steamAutoCrack:LangKeys.Close}}" HorizontalAlignment="Center" Margin="0,0,0,10" VerticalAlignment="Bottom" Width="77" Click="Close_Click" IsDefault="True"/>
+
 
     </Grid>
 </Window>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -6,7 +6,7 @@ namespace SteamAutoCrack.ViewModels;
 
 public class AboutViewModel : INotifyPropertyChanged
 {
-    public string Ver => "SteamAutoCrack " + Assembly.GetExecutingAssembly().GetName().Version;
+    public string Ver => "SteamAutoCrack " + (Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "");
 
     #region INPC
 

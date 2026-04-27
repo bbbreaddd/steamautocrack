@@ -30,7 +30,8 @@
         </Grid.ColumnDefinitions>
 
         <Image x:Name="Logo" HorizontalAlignment="Left" Height="40" Margin="150,5,0,0" VerticalAlignment="Top" Width="40" Source="/Views/SteamAutoCrack.png"/>
-        <TextBlock x:Name="SteamAutoCrack" HorizontalAlignment="Left" Margin="200,10,0,0" TextWrapping="Wrap" Text="{Binding Ver}" VerticalAlignment="Top" Height="35" Width="235" FontSize="20"/>
+        <TextBlock x:Name="SteamAutoCrack" HorizontalAlignment="Left" Margin="200,10,0,0" TextWrapping="NoWrap" Text="{Binding Ver}" VerticalAlignment="Top" Width="350" FontSize="20"/>
+
 
         <TextBlock Grid.Column="1" HorizontalAlignment="Left" Margin="10,20,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.Log}}" VerticalAlignment="Top" Height="19" Width="39"/>
         <Button x:Name="Clear_Log" Grid.Column="1" Content="{I18N {x:Static steamAutoCrack:LangKeys.ClearLog}}" HorizontalAlignment="Right" Margin="0,15,15,0" VerticalAlignment="Top" Width="95" Click="Clear_Log_Click"/>
@@ -93,7 +94,7 @@
                     <Border BorderBrush="Black" BorderThickness="1"/>
 
                     <TextBlock HorizontalAlignment="Left" Margin="5,12,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.Language}}" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="Language" HorizontalAlignment="Left" Margin="135,5,0,0" VerticalAlignment="Top" Width="180" ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}"/>
+                    <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Left" Margin="135,5,0,0" VerticalAlignment="Top" Width="180" ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}"/>
 
                     <TextBlock HorizontalAlignment="Left" Margin="5,47,0,0" TextWrapping="Wrap" Text="{I18N {x:Static steamAutoCrack:LangKeys.ListenPort}}" VerticalAlignment="Top"/>
                     <TextBox x:Name="ListenPort" HorizontalAlignment="Left" Margin="135,40,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="180" MaxLength="5" PreviewTextInput="ListenPort_PreviewTextInput" DataObject.Pasting="ListenPort_Pasting" Text="{Binding ListenPort}"/>

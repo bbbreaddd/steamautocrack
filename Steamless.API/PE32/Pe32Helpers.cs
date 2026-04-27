@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Steamless - Copyright (c) 2015 - 2024 atom0s [atom0s@live.com]
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
@@ -112,7 +112,7 @@ namespace Steamless.API.PE32
 
                 // Read the starting offset to the files NT headers..
                 fStream.Position = (int)Marshal.OffsetOf(typeof(NativeApi32.ImageDosHeader32), "e_lfanew");
-                fStream.Read(data, 0, 4);
+                fStream.ReadExactly(data, 0, 4);
 
                 var offset = BitConverter.ToUInt32(data, 0);
 
