@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using Serilog;
 using SteamAutoCrack.Core.Utils;
 using SteamAutoCrack.ViewModels;
@@ -113,18 +113,39 @@ public partial class AppIDFinder : Window
 
     private async void Search_Click(object sender, RoutedEventArgs e)
     {
-        viewModel.SearchBtnString = Properties.Resources.Searching;
-        Search.IsEnabled = false;
-        AppName.IsEnabled = false;
-        if (Fuzzy.IsChecked == true)
-            viewModel.Apps = await SteamAppList.GetListOfAppsByNameFuzzy(AppName.Text).ConfigureAwait(false);
-        else
-            viewModel.Apps = await SteamAppList.GetListOfAppsByName(AppName.Text).ConfigureAwait(false);
-        Dispatcher.Invoke(() =>
+        try
         {
-            Search.IsEnabled = true;
-            AppName.IsEnabled = true;
-        });
-        viewModel.SearchBtnString = Properties.Resources.Search;
+            viewModel.SearchBtnString = Properties.Resources.Searching;
+            Search.IsEnabled = false;
+            AppName.IsEnabled = false;
+            if (Fuzzy.IsChecked == true)
+                viewModel.Apps = await SteamAppList.GetListOfAppsByNameFuzzy(AppName.Text, viewModel.GamesOnly).ConfigureAwait(false);
+            else
+                viewModel.Apps = await SteamAppList.GetListOfAppsByName(AppName.Text, viewModel.GamesOnly).ConfigureAwait(false);
+            Dispatcher.Invoke(() =>
+            {
+                Search.IsEnabled = true;
+                AppName.IsEnabled = true;
+            });
+            viewModel.SearchBtnString = Properties.Resources.Search;
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error during AppID search.");
+            Dispatcher.Invoke(() =>
+            {
+                Search.IsEnabled = true;
+                AppName.IsEnabled = true;
+                viewModel.SearchBtnString = Properties.Resources.Search;
+            });
+        }
+    }
+
+    private void OnlyGames_Toggle(object sender, RoutedEventArgs e)
+    {
+        if (IsInitialized && !string.IsNullOrEmpty(AppName.Text))
+        {
+            Search_Click(sender, e);
+        }
     }
 }

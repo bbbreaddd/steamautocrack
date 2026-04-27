@@ -21,9 +21,12 @@ public class SteamApp
     [Column("name")]
     public string? Name { get; set; }
 
+    [Column("type")]
+    public string? Type { get; set; }
+
     public override string ToString()
     {
-        return $"{AppId}={Name}";
+        return $"{AppId}={Name} ({Type})";
     }
 }
 
@@ -83,10 +86,28 @@ public class SteamAppList
 
             db = new SQLiteAsyncConnection(Database);
             await db.CreateTableAsync<SteamApp>().ConfigureAwait(false);
+            
+            // Explicitly try to add the column if it doesn't exist, as CreateTableAsync sometimes fails to migrate existing tables
+            try
+            {
+                await db.ExecuteAsync("ALTER TABLE steamapp ADD COLUMN type TEXT").ConfigureAwait(false);
+            }
+            catch { /* Ignore if column already exists */ }
+
             var count = await db.Table<SteamApp>().CountAsync().ConfigureAwait(false);
+            var countWithoutType = 0;
+            try
+            {
+                countWithoutType = await db.Table<SteamApp>().Where(x => x.Type == null).CountAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // If the query fails, it's another sign we might need an update or column is missing
+                countWithoutType = 1; 
+            }
 
             bool dbExistsWithData = File.Exists(Database) && count > 0;
-            bool needsUpdate = DateTime.Now.Subtract(File.GetLastWriteTimeUtc(Database)).TotalDays >= 7 || count == 0 || forceupdate;
+            bool needsUpdate = DateTime.Now.Subtract(File.GetLastWriteTimeUtc(Database)).TotalDays >= 7 || count == 0 || countWithoutType > 0 || forceupdate;
             if (bInited && !needsUpdate && !forceupdate)
             {
                 _log.Debug("Already initialized Steam App list.");
@@ -130,73 +151,91 @@ public class SteamAppList
                     }
 
                     using var client = new HttpClient();
-                    uint lastAppId = 0;
-                    bool haveMore = false;
                     var allApps = new List<SteamApp>();
                     var requestKey = Config.Config.EMUGameInfoConfigs.SteamWebAPIKey;
                     var useProxy = Config.Config.EMUGameInfoConfigs.GameInfoAPI == EMUGameInfoConfig.GeneratorGameInfoAPI.GeneratorProxyServer;
-                    var hasProxyUrl = !string.IsNullOrEmpty(Config.Config.EMUGameInfoConfigs.CustomAPIEndpoint);
+
+                    var categories = new Dictionary<string, string>
+                    {
+                        { "include_games", "game" },
+                        { "include_dlc", "dlc" },
+                        { "include_software", "software" },
+                        { "include_videos", "video" },
+                        { "include_hardware", "hardware" }
+                    };
 
                     var maxRetries = 3;
 
-                    do
+                    foreach (var category in categories)
                     {
-                        string url;
-                        if (useProxy)
-                        {
-                            url = $"{steamapplisturl}?max_results=50000&last_appid={lastAppId}";
-                        }
-                        else
-                        {
-                            url = $"{steamapplisturl}?key={requestKey}&max_results=50000&last_appid={lastAppId}";
-                        }
-                        _log.Debug("Requesting Steam App list batch with last_appid={lastAppId}", lastAppId);
+                        uint lastAppId = 0;
+                        bool haveMore = false;
+                        _log.Information("Fetching category: {category}", category.Value);
 
-                        var attempt = 0;
-                        bool batchSuccess = false;
-                        while (attempt < maxRetries && !batchSuccess)
+                        do
                         {
-                            attempt++;
-                            try
+                            string url;
+                            var batchSize = useProxy ? 10000 : 50000;
+                            if (useProxy)
                             {
-                                var response = await client.GetAsync(url).ConfigureAwait(false);
-                                response.EnsureSuccessStatusCode();
-                                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                                var steamApps = DeserializeSteamApps(responseBody);
-                                if (steamApps?.AppList?.Apps != null && steamApps.AppList.Apps.Count > 0)
-                                {
-                                    allApps.AddRange(steamApps.AppList.Apps);
-                                    _log.Debug("Fetched {count} apps in this batch.", steamApps.AppList.Apps.Count);
-                                }
-
-                                haveMore = steamApps?.AppList?.HaveMoreResults ?? false;
-                                lastAppId = steamApps?.AppList?.LastAppId ?? 0;
-
-                                batchSuccess = true;
+                                url = $"{steamapplisturl.TrimEnd('/')}/?{category.Key}=true&max_results={batchSize}&last_appid={lastAppId}";
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                _log.Warning(ex, "Failed to fetch Steam App batch (attempt {attempt}/{maxRetries}).", attempt, maxRetries);
-                                if (attempt < maxRetries)
+                                url = $"{steamapplisturl.TrimEnd('/')}/?key={requestKey}&{category.Key}=true&max_results={batchSize}&last_appid={lastAppId}";
+                            }
+                            _log.Debug("Requesting Steam App list batch ({category}) with last_appid={lastAppId}", category.Value, lastAppId);
+
+                            var attempt = 0;
+                            bool batchSuccess = false;
+                            while (attempt < maxRetries && !batchSuccess)
+                            {
+                                attempt++;
+                                try
                                 {
-                                    var delayMs = (int)(1000 * Math.Pow(2, attempt - 1));
-                                    await Task.Delay(delayMs).ConfigureAwait(false);
+                                    var response = await client.GetAsync(url).ConfigureAwait(false);
+                                    response.EnsureSuccessStatusCode();
+                                    var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                                    var steamApps = DeserializeSteamApps(responseBody);
+                                    if (steamApps?.AppList?.Apps != null && steamApps.AppList.Apps.Count > 0)
+                                    {
+                                        foreach (var app in steamApps.AppList.Apps)
+                                        {
+                                            app.Type = category.Value;
+                                        }
+                                        allApps.AddRange(steamApps.AppList.Apps);
+                                        _log.Debug("Fetched {count} apps in this batch.", steamApps.AppList.Apps.Count);
+                                    }
+
+                                    haveMore = steamApps?.AppList?.HaveMoreResults ?? false;
+                                    lastAppId = steamApps?.AppList?.LastAppId ?? 0;
+
+                                    batchSuccess = true;
+                                    if (useProxy) await Task.Delay(200).ConfigureAwait(false); // Small delay to be nice to proxy
                                 }
-                                else
+                                catch (Exception ex)
                                 {
-                                    _log.Error(ex, "Exhausted retries fetching Steam App list. Aborting update.");
-                                    if (!dbExistsWithData) bDisposed = true;
-                                    return;
+                                    _log.Warning(ex, "Failed to fetch Steam App batch (attempt {attempt}/{maxRetries}).", attempt, maxRetries);
+                                    if (attempt < maxRetries)
+                                    {
+                                        var delayMs = (int)(1000 * Math.Pow(2, attempt - 1));
+                                        await Task.Delay(delayMs).ConfigureAwait(false);
+                                    }
+                                    else
+                                    {
+                                        _log.Error(ex, "Exhausted retries fetching Steam App list category {category}. Skipping category.", category.Value);
+                                        haveMore = false;
+                                    }
                                 }
                             }
-                        }
 
-                    } while (haveMore);
+                        } while (haveMore);
+                    }
 
                     if (allApps.Count > 0)
                     {
-                        await db.InsertAllAsync(allApps, "OR IGNORE").ConfigureAwait(false);
+                        await db.InsertAllAsync(allApps, "OR REPLACE").ConfigureAwait(false);
                         _log.Information("Updated Steam App list. Total fetched apps: {count}", allApps.Count);
                     }
                     else
@@ -305,14 +344,18 @@ public class SteamAppList
         return apps;
     }
 
-    public static async Task<IEnumerable<SteamApp>> GetListOfAppsByName(string name)
+    public static async Task<IEnumerable<SteamApp>> GetListOfAppsByName(string name, bool gamesOnly = false)
     {
         if (db == null || await db.Table<SteamApp>().CountAsync().ConfigureAwait(false) == 0)
         {
             return await SearchSteamStoreAPI(name).ConfigureAwait(false);
         }
 
-        var query = await db.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
+        var table = db.Table<SteamApp>();
+        var query = gamesOnly
+            ? await table.Where(x => x.Type == "game").ToListAsync().ConfigureAwait(false)
+            : await table.ToListAsync().ConfigureAwait(false);
+
         var SearchOfAppsByName = query.Search(x => x.Name)
             .SetCulture(StringComparison.OrdinalIgnoreCase)
             .ContainingAll(name.Split(' '));
@@ -328,14 +371,18 @@ public class SteamAppList
         return listOfAppsByName;
     }
 
-    public static async Task<IEnumerable<SteamApp>> GetListOfAppsByNameFuzzy(string name)
+    public static async Task<IEnumerable<SteamApp>> GetListOfAppsByNameFuzzy(string name, bool gamesOnly = false)
     {
         if (db == null || await db.Table<SteamApp>().CountAsync().ConfigureAwait(false) == 0)
         {
             return await SearchSteamStoreAPI(name).ConfigureAwait(false);
         }
 
-        var query = await db.Table<SteamApp>().ToListAsync().ConfigureAwait(false);
+        var table = db.Table<SteamApp>();
+        var query = gamesOnly
+            ? await table.Where(x => x.Type == "game").ToListAsync().ConfigureAwait(false)
+            : await table.ToListAsync().ConfigureAwait(false);
+
         var listOfAppsByName = new List<SteamApp>();
         var results = Process.ExtractTop(new SteamApp { Name = name }, query, x => x.Name?.ToLower(),
             ScorerCache.Get<WeightedRatioScorer>(), FuzzySearchScore);

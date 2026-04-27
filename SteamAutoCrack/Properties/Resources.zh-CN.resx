@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -356,6 +356,9 @@
   </data>
   <data name="SteamAPICheckBypassMode" xml:space="preserve">
     <value>SteamAPICheckBypass 模式:</value>
+  </data>
+  <data name="OnlyGames" xml:space="preserve">
+    <value>仅显示游戏</value>
   </data>
   <data name="Ticket" xml:space="preserve">
     <value>票证:</value>

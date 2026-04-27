@@ -158,7 +158,8 @@ internal class Program
             crackCommand,
             updateapplistCommand,
             downloademuCommand,
-            createconfigCommand
+            createconfigCommand,
+            findappidCommand
         };
 
         rootCommand.Options.Add(DebugOption);

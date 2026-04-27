@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using SteamAutoCrack.Core.Utils;
@@ -59,6 +59,22 @@ internal class AppIDFinderViewModel : INotifyPropertyChanged
             NotifyPropertyChanged();
         }
     }
+
+    public bool GamesOnly
+    {
+        get => _GamesOnly;
+
+        set
+        {
+            if (value != _GamesOnly)
+            {
+                _GamesOnly = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+
+    private bool _GamesOnly = true;
 
     public IEnumerable<SteamApp> Apps
     {
