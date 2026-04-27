@@ -258,7 +258,7 @@ internal abstract class Generator
         {
             _log.Information("Getting game schema...");
             var useCustomEndpoint = !string.IsNullOrWhiteSpace(CustomAPIEndpoint);
-            var GameSchemaUrl = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/";
+
 
             var useProxy = this is GeneratorProxyServer;
 

@@ -127,12 +127,6 @@ public class Config
     private static bool _EnableDebugLog;
     public static LoggingLevelSwitch loggingLevelSwitch = new();
 
-    private static bool CheckConfigFile()
-    {
-        if (File.Exists(ConfigPath)) return true;
-        return false;
-    }
-
     public static void CheckInputPath()
     {
         if (!Directory.Exists(EMUConfigPath) && !File.Exists(EMUConfigPath)) throw new Exception("Invaild input path.");
