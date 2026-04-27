@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using AuthenticodeExaminer;
 using IniFile;
 using Serilog;
@@ -144,9 +144,10 @@ public class EMUApply : IEMUApply
                 return false;
             }
 
-            if (!File.Exists(Path.Combine(emuApplyConfig.ConfigPath, "steam_appid.txt")))
+            var appidPath = Path.Combine(emuApplyConfig.ConfigPath, "steam_appid.txt");
+            if (!File.Exists(appidPath))
             {
-                _log.Error("Emulator Config Not Exist. (Please generate emulator game info first)");
+                _log.Error("Emulator Config Not Exist at {Path}. (Please generate emulator game info first)", Path.GetFullPath(appidPath));
                 return false;
             }
 

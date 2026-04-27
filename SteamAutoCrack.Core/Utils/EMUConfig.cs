@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using IniFile;
 using Serilog;
 using SteamKit2;
@@ -335,9 +335,10 @@ public class EMUConfigGenerator : IEMUConfigGenerator
         try
         {
             _log.Debug("Generating emulator config...");
-            if (!File.Exists(Path.Combine(EMUConfig.ConfigPath, "steam_appid.txt")))
+            var appidPath = Path.Combine(EMUConfig.ConfigPath, "steam_appid.txt");
+            if (!File.Exists(appidPath))
             {
-                _log.Error("Emulator Config Not Exist. (Please generate emulator game info first)");
+                _log.Error("Emulator Config Not Exist at {Path}. (Please generate emulator game info first)", Path.GetFullPath(appidPath));
                 return false;
             }
 

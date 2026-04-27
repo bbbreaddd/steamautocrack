@@ -188,12 +188,15 @@ internal abstract class Generator
         if (useProxy)
         {
             var endpoint = string.IsNullOrWhiteSpace(CustomAPIEndpoint) ? DefaultProxyURL : CustomAPIEndpoint;
+            _log.Debug("Proxy mode active. Using endpoint: {Endpoint}", endpoint);
             
             // Use custom endpoint as proxy
             var officialUri = new Uri(officialUrl);
             var customBase = endpoint.TrimEnd('/');
             var separatorProxy = string.IsNullOrEmpty(queryParams) ? "" : "?";
-            return $"{customBase}{officialUri.AbsolutePath}{separatorProxy}{queryParams}";
+            var finalUrl = $"{customBase}{officialUri.AbsolutePath}{separatorProxy}{queryParams}";
+            _log.Debug("Generated Proxy URL: {Url}", finalUrl);
+            return finalUrl;
         }
 
         // Standard logic (Official Steam API)
@@ -235,8 +238,9 @@ internal abstract class Generator
             _log.Debug("Outputting game info to {0}", Path.GetFullPath(ConfigPath));
             try
             {
-                File.WriteAllText(Path.Combine(ConfigPath, "steam_appid.txt"), AppID.ToString());
-                _log.Debug("Generated steam_appid.txt");
+                var appidPath = Path.Combine(ConfigPath, "steam_appid.txt");
+                File.WriteAllText(appidPath, AppID.ToString());
+                _log.Debug("Generated steam_appid.txt at: {Path}", Path.GetFullPath(appidPath));
             }
             catch (Exception ex)
             {
@@ -256,7 +260,9 @@ internal abstract class Generator
             var useCustomEndpoint = !string.IsNullOrWhiteSpace(CustomAPIEndpoint);
             var GameSchemaUrl = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/";
 
-            if (!useCustomEndpoint && (SteamWebAPIKey == string.Empty || SteamWebAPIKey == null))
+            var useProxy = this is GeneratorProxyServer;
+
+            if (!useProxy && !useCustomEndpoint && (SteamWebAPIKey == string.Empty || SteamWebAPIKey == null))
             {
                 _log.Warning("Empty Steam Web API Key, skipping getting game schema...");
                 return false;
@@ -443,7 +449,9 @@ internal abstract class Generator
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(CustomAPIEndpoint) && (SteamWebAPIKey == string.Empty || SteamWebAPIKey == null))
+            var useProxy = this is GeneratorProxyServer;
+
+            if (!useProxy && string.IsNullOrWhiteSpace(CustomAPIEndpoint) && (SteamWebAPIKey == string.Empty || SteamWebAPIKey == null))
             {
                 _log.Debug("Empty Steam Web API Key, skipping generate inventory...");
                 return;
@@ -1998,7 +2006,7 @@ internal class GeneratorSteamClient : Generator
 
             var TaskA = Task.Run(async () =>
             {
-                if (GetGameSchema(cancellationToken).GetAwaiter().GetResult())
+                if (await GetGameSchema(cancellationToken).ConfigureAwait(false))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     var Tasks2 = new List<Task>
@@ -2010,6 +2018,10 @@ internal class GeneratorSteamClient : Generator
 
                         cancellationToken.ThrowIfCancellationRequested();
                     }
+                }
+                else
+                {
+                    _log.Error("Could not retrieve game schema (achievements/stats).");
                 }
             });
 
@@ -2141,7 +2153,7 @@ internal class GeneratorSteamWeb : Generator
         try
         {
             await GenerateBasic().ConfigureAwait(false);
-            if (GetGameSchema().GetAwaiter().GetResult())
+            if (await GetGameSchema(cancellationToken).ConfigureAwait(false))
             {
                 var Tasks2 = new List<Task>
                 {
@@ -2155,6 +2167,10 @@ internal class GeneratorSteamWeb : Generator
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }
+            }
+            else
+            {
+                _log.Error("Could not retrieve game schema. Achievements, stats, and inventory will not be generated.");
             }
 
             cancellationToken.ThrowIfCancellationRequested();
