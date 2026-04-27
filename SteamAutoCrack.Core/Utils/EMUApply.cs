@@ -215,28 +215,23 @@ public class EMUApply : IEMUApply
         try
         {
             _log.Debug("Applying Steam emulator to \"{filePath}\"...", filePath);
-            if (File.Exists(Path.ChangeExtension(filePath, ".dll.bak")))
+            if (!File.Exists(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_api64.dll.bak")))
             {
-                _log.Information("Backup file already exists, skipping apply Steam emulator \"{filePath}\"...",
-                    filePath);
-                return;
+                File.Move(filePath, Path.ChangeExtension(filePath, ".dll.bak"));
+                if (emuApplyConfig.UseGoldbergExperimental)
+                    File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "experimental", "x64", "steam_api64.dll"),
+                        filePath);
+                else
+                    File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "x64", "steam_api64.dll"), filePath);
+                _log.Information("Applied Goldberg Steam Emulator to {Path}", filePath);
             }
-
-            File.Move(filePath, Path.ChangeExtension(filePath, ".dll.bak"));
-            if (emuApplyConfig.UseGoldbergExperimental)
-                File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "experimental", "x64", "steam_api64.dll"),
-                    filePath);
             else
-                File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "x64", "steam_api64.dll"), filePath);
-            if (Directory.Exists(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_settings")))
             {
-                _log.Debug("steam_settings folder already exists, skipping copy steam_settings folder...");
-                _log.Information("Steam emulator \"{filePath}\" applied.", filePath);
-                return;
+                _log.Information("Goldberg already detected (backup exists). Updating settings only...");
             }
-
             CopyDirectory(new DirectoryInfo(emuApplyConfig.ConfigPath),
                 new DirectoryInfo(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_settings")));
+
             if (emuApplyConfig.GenerateInterfacesFile)
                 await GenerateInterfacesFile(Path.ChangeExtension(filePath, ".dll.bak"),
                     emuApplyConfig.ForceGenerateInterfacesFiles).ConfigureAwait(false);
@@ -270,27 +265,22 @@ public class EMUApply : IEMUApply
         try
         {
             _log.Debug("Applying Steam emulator to \"{filePath}\"...", filePath);
-            if (File.Exists(Path.ChangeExtension(filePath, ".dll.bak")))
+            if (!File.Exists(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_api.dll.bak")))
             {
-                _log.Information("Backup file already exists, skipping apply Steam emulator \"{filePath}\"...",
-                    filePath);
-                return;
+                File.Move(filePath, Path.ChangeExtension(filePath, ".dll.bak"));
+                if (emuApplyConfig.UseGoldbergExperimental)
+                    File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "experimental", "x32", "steam_api.dll"), filePath);
+                else
+                    File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "x32", "steam_api.dll"), filePath);
+                _log.Information("Applied Goldberg Steam Emulator to {Path}", filePath);
             }
-
-            File.Move(filePath, Path.ChangeExtension(filePath, ".dll.bak"));
-            if (emuApplyConfig.UseGoldbergExperimental)
-                File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "experimental", "x32", "steam_api.dll"), filePath);
             else
-                File.Copy(Path.Combine(emuApplyConfig.GoldbergPath, "x32", "steam_api.dll"), filePath);
-            if (Directory.Exists(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_settings")))
             {
-                _log.Debug("steam_settings folder already exists, skipping copy steam_settings folder...");
-                _log.Information("Steam emulator \"{filePath}\" applied.", filePath);
-                return;
+                _log.Information("Goldberg already detected (backup exists). Updating settings only...");
             }
-
             CopyDirectory(new DirectoryInfo(emuApplyConfig.ConfigPath),
                 new DirectoryInfo(Path.Combine(Path.GetDirectoryName(filePath) ?? String.Empty, "steam_settings")));
+
             if (emuApplyConfig.GenerateInterfacesFile)
                 await GenerateInterfacesFile(Path.ChangeExtension(filePath, ".dll.bak"),
                     emuApplyConfig.ForceGenerateInterfacesFiles).ConfigureAwait(false);
